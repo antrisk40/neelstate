@@ -3,11 +3,13 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import userRouter from './routes/user.route.js'
 import authRouter from './routes/auth.route.js'
+import cookieParser from "cookie-parser";
 dotenv.config();
 
 const app = express();
 
 app.use(express.json()); // this is used to get printed data on console from post request
+app.use(cookieParser());
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
