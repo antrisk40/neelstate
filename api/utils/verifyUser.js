@@ -1,4 +1,5 @@
-import jwt from "jsonwebtoken"; // Import jwt without curly braces
+import jwt from "jsonwebtoken";
+import { errorHandler } from './error.js'
 
 export const verifyToken = (req, res, next) => {
   const token = req.cookies.access_token;
