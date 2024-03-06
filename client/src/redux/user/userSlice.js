@@ -45,7 +45,20 @@ const userSlice = createSlice({
     deleteUserFailure: (state, action) => {
       state.error = aciton.payload;
       state.loading = false;
-    }
+    },
+    signOutUserStart: (state, action) => {
+      state.loading = true;
+    },
+    signOutUserSuccess: (state) => {
+      state.currentUser = null;
+      state.loading = false;
+      state.error = null;
+    },
+    signOutUserFailure: (state, action) => {
+      state.error = aciton.payload;
+      state.loading = false;
+    },
+
   },
 });
 
@@ -59,6 +72,9 @@ export const {
   deleteUserFailure,
   deleteUserSuccess,
   deleteUserStart,
+  signOutUserFailure,
+  signOutUserStart,
+  signOutUserSuccess,
 } = userSlice.actions;
 
 export default userSlice.reducer;
