@@ -2,12 +2,15 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import userRouter from './routes/user.route.js'
+import cors from "cors"
 import authRouter from './routes/auth.route.js'
 import cookieParser from "cookie-parser";
 import listingRouter from "./routes/listing.route.js";
 dotenv.config();
 
 const app = express();
+
+app.use(cors());
 
 app.use(express.json()); // this is used to get printed data on console from post request
 app.use(cookieParser());
