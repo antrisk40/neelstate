@@ -34,9 +34,18 @@ function Header() {
             </Link>
           </li>
           <li>
+            <Link to="/profile" className="text-slate-700 hover:underline">
+              Profile
+            </Link>
+          </li>
+          <li>
             <Link to="/sign-in" className="text-slate-700 hover:underline">
               {currentUser ? (
-                <img className="rounded-full h-10 w-10 object-cover" src={currentUser.avatar} alt="Profile" />
+                <img
+                  className="rounded-full h-10 w-10 object-cover"
+                  src={currentUser.avatar}
+                  alt="Profile"
+                />
               ) : (
                 "Sign in"
               )}
