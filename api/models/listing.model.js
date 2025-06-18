@@ -50,6 +50,15 @@ const listingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // Mapbox coordinates
+    latitude: {
+      type: Number,
+      required: false,
+    },
+    longitude: {
+      type: Number,
+      required: false,
+    },
   },
   { timestamps: true }
 );

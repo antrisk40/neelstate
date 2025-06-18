@@ -8,6 +8,7 @@ import {
 import { app } from "../firebase";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { geocodeAddress } from "../utils/geocoding";
 
 export default function CreateListing() {
   const { currentUser } = useSelector((state) => state.user);
@@ -26,11 +27,14 @@ export default function CreateListing() {
     offer: false,
     parking: false,
     furnished: false,
+    latitude: "",
+    longitude: "",
   });
   const [imageUploadError, setImageUploadError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [geocodingLoading, setGeocodingLoading] = useState(false);
   console.log(formData);
   const handleImageSubmit = (e) => {
     if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
@@ -90,6 +94,33 @@ export default function CreateListing() {
       ...formData,
       imageUrls: formData.imageUrls.filter((_, i) => i !== index),
     });
+  };
+
+  const handleGetCoordinates = async () => {
+    if (!formData.address.trim()) {
+      setError("Please enter an address first");
+      return;
+    }
+
+    setGeocodingLoading(true);
+    setError(false);
+
+    try {
+      const coords = await geocodeAddress(formData.address);
+      if (coords) {
+        setFormData({
+          ...formData,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        });
+      } else {
+        setError("Could not find coordinates for this address");
+      }
+    } catch (error) {
+      setError("Failed to get coordinates. Please enter them manually.");
+    } finally {
+      setGeocodingLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -189,6 +220,34 @@ export default function CreateListing() {
             onChange={handleChange}
             value={formData.address}
           />
+          <div className="flex gap-4">
+            <input
+              type="number"
+              placeholder="Latitude"
+              className="border p-3 rounded-lg flex-1"
+              id="latitude"
+              step="any"
+              onChange={handleChange}
+              value={formData.latitude}
+            />
+            <input
+              type="number"
+              placeholder="Longitude"
+              className="border p-3 rounded-lg flex-1"
+              id="longitude"
+              step="any"
+              onChange={handleChange}
+              value={formData.longitude}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleGetCoordinates}
+            disabled={geocodingLoading || !formData.address.trim()}
+            className="p-3 text-blue-700 border border-blue-700 rounded uppercase hover:shadow-lg disabled:opacity-80"
+          >
+            {geocodingLoading ? "Getting coordinates..." : "Get coordinates from address"}
+          </button>
           <div className="flex gap-6 flex-wrap">
             <div className="flex gap-2">
               <input

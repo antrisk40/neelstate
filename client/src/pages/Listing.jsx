@@ -15,6 +15,7 @@ import {
   FaShare,
 } from "react-icons/fa";
 import Contact from "../components/Contact";
+import Map from "../components/Map";
 
 // https://sabe.io/blog/javascript-format-numbers-commas#:~:text=The%20best%20way%20to%20format,format%20the%20number%20with%20commas.
 
@@ -145,6 +146,16 @@ export default function Listing() {
               </button>
             )}
             {contact && <Contact listing={listing} />}
+            {listing.latitude && listing.longitude && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3">Location</h3>
+                <Map 
+                  latitude={listing.latitude} 
+                  longitude={listing.longitude} 
+                  address={listing.address}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
