@@ -10,6 +10,8 @@ import CreateListing from "./pages/CreateListing";
 import UpdateListing from "./pages/UpdateListing";
 import Listing from "./pages/Listing";
 import Search from "./pages/Search";
+import PurchasedListings from "./pages/PurchasedListings";
+import SoldListings from "./pages/SoldListings";
 
 export default function App() {
   return (
@@ -31,6 +33,9 @@ export default function App() {
             element={<UpdateListing />}
           />
         </Route>
+
+        <Route path="/purchased-listings" element={<PurchasedListings />} />
+        <Route path="/sold-listings" element={<SoldListings />} />
       </Routes>
     </BrowserRouter>
   );

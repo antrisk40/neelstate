@@ -33,11 +33,25 @@ function Header() {
               About
             </Link>
           </li>
-          <li>
-            <Link to="/profile" className="text-slate-700 hover:underline">
-              Profile
-            </Link>
-          </li>
+          {currentUser && (
+            <>
+              <li>
+                <Link to="/profile" className="text-slate-700 hover:underline">
+                  Profile
+                </Link>
+              </li>
+              <li>
+                <Link to="/purchased-listings" className="text-slate-700 hover:underline">
+                  My Purchases
+                </Link>
+              </li>
+              <li>
+                <Link to="/sold-listings" className="text-slate-700 hover:underline">
+                  My Sales
+                </Link>
+              </li>
+            </>
+          )}
           <li>
             <Link to="/sign-in" className="text-slate-700 hover:underline">
               {currentUser ? (

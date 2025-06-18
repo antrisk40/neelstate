@@ -102,6 +102,10 @@ export const getListings = async (req, res, next) => {
       furnished,
       parking,
       type,
+      $or: [
+        { isSold: false },
+        { isSold: { $exists: false } }
+      ]
     })
       .sort({ [sort]: order })
       .limit(limit)

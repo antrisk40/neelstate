@@ -26,6 +26,10 @@ const listingSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    bedrooms: {
+      type: Number,
+      required: true,
+    },
     furnished: {
       type: Boolean,
       required: true,
@@ -58,6 +62,30 @@ const listingSchema = new mongoose.Schema(
     longitude: {
       type: Number,
       required: false,
+    },
+    // Purchase status and buyer information
+    isSold: {
+      type: Boolean,
+      default: false,
+    },
+    buyerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    soldAt: {
+      type: Date,
+      default: null,
+    },
+    // Stripe payment information
+    stripePaymentIntentId: {
+      type: String,
+      default: null,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'completed', 'failed', 'refunded'],
+      default: 'pending',
     },
   },
   { timestamps: true }
