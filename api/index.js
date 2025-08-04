@@ -16,10 +16,11 @@ app.use(cors());
 app.use(express.json()); // this is used to get printed data on console from post request
 app.use(cookieParser());
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URL = process.env.MONGODB_URL;
+const PORT = process.env.PORT || 3000;
 
 mongoose
-  .connect(MONGODB_URI)
+  .connect(MONGODB_URL)
   .then(() => {
     console.log("MongoDB connected");
   })
@@ -27,14 +28,23 @@ mongoose
     console.error(err);
   });
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/listing", listingRouter);
 app.use("/api/payment", paymentRouter);    
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    message: "NeelState API is running",
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
