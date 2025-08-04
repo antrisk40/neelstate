@@ -1,38 +1,55 @@
-import { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-
-// You'll need to add your Mapbox access token to your environment variables
-// VITE_MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
-
-// Disable Mapbox analytics and telemetry
-if (typeof window !== 'undefined') {
-  // Disable Mapbox telemetry
-  mapboxgl.setRTLTextPlugin = () => {};
-  
-  // Override the analytics endpoint to prevent ad blocker issues
-  const originalFetch = window.fetch;
-  window.fetch = function(url, options) {
-    if (typeof url === 'string' && url.includes('events.mapbox.com')) {
-      // Silently ignore analytics requests
-      return Promise.resolve(new Response('{}', { status: 200 }));
-    }
-    return originalFetch(url, options);
-  };
-}
+import { useEffect, useRef, useState } from 'react';
 
 export default function Map({ latitude, longitude, address }) {
   const mapContainer = useRef(null);
   const map = useRef(null);
+  const [mapboxgl, setMapboxgl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  // Dynamically load mapbox-gl
+  useEffect(() => {
+    const loadMapbox = async () => {
+      try {
+        const mapboxModule = await import('mapbox-gl');
+        const mapboxgl = mapboxModule.default;
+        
+        // Import CSS
+        await import('mapbox-gl/dist/mapbox-gl.css');
+        
+        // Set access token
+        mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
+        
+        // Disable Mapbox analytics and telemetry
+        if (typeof window !== 'undefined') {
+          // Disable Mapbox telemetry
+          mapboxgl.setRTLTextPlugin = () => {};
+          
+          // Override the analytics endpoint to prevent ad blocker issues
+          const originalFetch = window.fetch;
+          window.fetch = function(url, options) {
+            if (typeof url === 'string' && url.includes('events.mapbox.com')) {
+              // Silently ignore analytics requests
+              return Promise.resolve(new Response('{}', { status: 200 }));
+            }
+            return originalFetch(url, options);
+          };
+        }
+        
+        setMapboxgl(mapboxgl);
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to load Mapbox:', err);
+        setError(true);
+        setLoading(false);
+      }
+    };
+
+    loadMapbox();
+  }, []);
 
   useEffect(() => {
-    if (map.current) return; // initialize map only once
-    
-    if (!latitude || !longitude) {
-      console.warn('No coordinates provided for map');
-      return;
-    }
+    if (!mapboxgl || map.current || !latitude || !longitude) return;
 
     try {
       map.current = new mapboxgl.Map({
@@ -66,9 +83,10 @@ export default function Map({ latitude, longitude, address }) {
 
     } catch (error) {
       console.warn('Map initialization failed:', error);
+      setError(true);
     }
 
-  }, [latitude, longitude, address]);
+  }, [mapboxgl, latitude, longitude, address]);
 
   useEffect(() => {
     return () => {
@@ -78,7 +96,15 @@ export default function Map({ latitude, longitude, address }) {
     };
   }, []);
 
-  if (!latitude || !longitude) {
+  if (loading) {
+    return (
+      <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+        <p className="text-gray-500">Loading map...</p>
+      </div>
+    );
+  }
+
+  if (error || !latitude || !longitude) {
     return (
       <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
         <p className="text-gray-500">No location data available</p>
