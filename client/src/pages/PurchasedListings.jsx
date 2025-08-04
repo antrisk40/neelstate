@@ -19,7 +19,9 @@ export default function PurchasedListings() {
         const apiUrl = import.meta.env.VITE_API_URL || '';
         const purchasedUrl = apiUrl ? `${apiUrl}/api/payment/purchased-listings/${currentUser._id}` : `/api/payment/purchased-listings/${currentUser._id}`;
         
-        const res = await fetch(purchasedUrl);
+        const res = await fetch(purchasedUrl, {
+          credentials: 'include',
+        });
         const data = await res.json();
         
         if (res.ok) {

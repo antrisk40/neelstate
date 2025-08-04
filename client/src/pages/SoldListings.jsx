@@ -14,8 +14,13 @@ export default function SoldListings() {
     const fetchUserListings = async () => {
       try {
         setLoading(true);
-        // Use the same endpoint as the profile page to get all user listings
-        const res = await fetch(`/api/user/listing/${currentUser._id}`);
+        // Get API URL from environment variable
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const listingsUrl = apiUrl ? `${apiUrl}/api/user/listing/${currentUser._id}` : `/api/user/listing/${currentUser._id}`;
+        
+        const res = await fetch(listingsUrl, {
+          credentials: 'include',
+        });
         const data = await res.json();
         
         if (res.ok) {
@@ -45,11 +50,16 @@ export default function SoldListings() {
     setRefunding(prev => ({ ...prev, [listingId]: true }));
 
     try {
-      const res = await fetch(`/api/payment/refund/${listingId}`, {
+      // Get API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const refundUrl = apiUrl ? `${apiUrl}/api/payment/refund/${listingId}` : `/api/payment/refund/${listingId}`;
+      
+      const res = await fetch(refundUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           userId: currentUser._id,
         }),

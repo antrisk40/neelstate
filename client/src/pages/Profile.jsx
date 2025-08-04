@@ -29,6 +29,9 @@ export default function Profile() {
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [showListingsError, setShowListingsError] = useState(false);
   const [userListings, setUserListings] = useState([]);
+  const [localLoading, setLocalLoading] = useState(false);
+  const [localError, setLocalError] = useState(false);
+  const [authStatus, setAuthStatus] = useState('checking');
   const dispatch = useDispatch();
 
   // firebase storage
@@ -74,8 +77,8 @@ export default function Profile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      setLoading(true);
-      setError(false);
+      setLocalLoading(true);
+      setLocalError(false);
       
       // Get API URL from environment variable
       const apiUrl = import.meta.env.VITE_API_URL || '';
@@ -86,29 +89,30 @@ export default function Profile() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include',
         body: JSON.stringify(formData),
       });
       const data = await res.json();
 
       if (data.success === false) {
-        setError(data.message);
-        setLoading(false);
+        setLocalError(data.message);
+        setLocalLoading(false);
         return;
       }
 
       dispatch(updateUserSuccess(data));
       setUpdateSuccess(true);
-      setLoading(false);
+      setLocalLoading(false);
     } catch (error) {
-      setError(error.message);
-      setLoading(false);
+      setLocalError(error.message);
+      setLocalLoading(false);
     }
   };
 
   const handleDeleteUser = async () => {
     try {
-      setLoading(true);
-      setError(false);
+      setLocalLoading(true);
+      setLocalError(false);
       
       // Get API URL from environment variable
       const apiUrl = import.meta.env.VITE_API_URL || '';
@@ -116,11 +120,12 @@ export default function Profile() {
       
       const res = await fetch(deleteUrl, {
         method: "DELETE",
+        credentials: 'include',
       });
       const data = await res.json();
       if (data.success === false) {
-        setError(data.message);
-        setLoading(false);
+        setLocalError(data.message);
+        setLocalLoading(false);
         return;
       }
       dispatch(deleteUserSuccess());
@@ -136,49 +141,125 @@ export default function Profile() {
       const apiUrl = import.meta.env.VITE_API_URL || '';
       const signoutUrl = apiUrl ? `${apiUrl}/api/auth/signout` : '/api/auth/signout';
       
-      const res = await fetch(signoutUrl);
+      const res = await fetch(signoutUrl, {
+        credentials: 'include',
+      });
       const data = await res.json();
       if (data.success === false) {
-        setError(data.message);
+        setLocalError(data.message);
+        setLocalLoading(false);
         return;
       }
       dispatch(signOutUserSuccess());
+      setLocalLoading(false);
     } catch (error) {
-      setError(error.message);
+      setLocalError(error.message);
+      setLocalLoading(false);
     }
   };
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const authUrl = apiUrl ? `${apiUrl}/api/auth/test` : '/api/auth/test';
+        
+        const res = await fetch(authUrl, {
+          credentials: 'include',
+        });
+        
+        if (res.ok) {
+          setAuthStatus('authenticated');
+        } else {
+          setAuthStatus('not-authenticated');
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setAuthStatus('error');
+      }
+    };
+    
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     const fetchUserListings = async () => {
       try {
-        setLoading(true);
-        setError(false);
+        setLocalLoading(true);
+        setLocalError(false);
+        
+        // Debug: Log current user and API URL
+        console.log('Current user:', currentUser);
+        console.log('API URL:', import.meta.env.VITE_API_URL);
         
         // Get API URL from environment variable
         const apiUrl = import.meta.env.VITE_API_URL || '';
         const listingsUrl = apiUrl ? `${apiUrl}/api/user/listing/${currentUser._id}` : `/api/user/listing/${currentUser._id}`;
         
-        const res = await fetch(listingsUrl);
+        console.log('Fetching from:', listingsUrl);
+        
+        const res = await fetch(listingsUrl, {
+          credentials: 'include',
+        });
         const data = await res.json();
+        console.log('Response:', res.status, data);
+        
         if (data.success === false) {
-          setError(data.message);
-          setLoading(false);
+          setLocalError(data.message);
+          setLocalLoading(false);
           return;
         }
         setUserListings(data);
-        setLoading(false);
+        setLocalLoading(false);
       } catch (error) {
-        setError(error.message);
-        setLoading(false);
+        console.error('Fetch error:', error);
+        setLocalError(error.message);
+        setLocalLoading(false);
       }
     };
     fetchUserListings();
   }, [currentUser._id]);
 
+  const handleShowListings = async () => {
+    try {
+      setLocalLoading(true);
+      setShowListingsError(false);
+      
+      // Debug: Log current user and API URL
+      console.log('Show Listings - Current user:', currentUser);
+      console.log('Show Listings - API URL:', import.meta.env.VITE_API_URL);
+      
+      // Get API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const listingsUrl = apiUrl ? `${apiUrl}/api/user/listing/${currentUser._id}` : `/api/user/listing/${currentUser._id}`;
+      
+      console.log('Show Listings - Fetching from:', listingsUrl);
+      
+      const res = await fetch(listingsUrl, {
+        credentials: 'include',
+      });
+      const data = await res.json();
+      console.log('Show Listings - Response:', res.status, data);
+      
+      if (data.success === false) {
+        setShowListingsError(true);
+        setLocalLoading(false);
+        return;
+      }
+      setUserListings(data);
+      setLocalLoading(false);
+    } catch (error) {
+      console.error('Show Listings - Fetch error:', error);
+      setShowListingsError(true);
+      setLocalLoading(false);
+    }
+  };
+
   const handleListingDelete = async (listingId) => {
     try {
-      setLoading(true);
-      setError(false);
+      setLocalLoading(true);
+      setLocalError(false);
       
       // Get API URL from environment variable
       const apiUrl = import.meta.env.VITE_API_URL || '';
@@ -186,18 +267,19 @@ export default function Profile() {
       
       const res = await fetch(deleteUrl, {
         method: "DELETE",
+        credentials: 'include',
       });
       const data = await res.json();
       if (data.success === false) {
-        setError(data.message);
-        setLoading(false);
+        setLocalError(data.message);
+        setLocalLoading(false);
         return;
       }
       setUserListings((prev) => prev.filter((listing) => listing._id !== listingId));
-      setLoading(false);
+      setLocalLoading(false);
     } catch (error) {
-      setError(error.message);
-      setLoading(false);
+      setLocalError(error.message);
+      setLocalLoading(false);
     }
   };
   return (
@@ -254,10 +336,10 @@ export default function Profile() {
           className="border p-3 rounded-lg"
         />
         <button
-          disabled={loading}
+          disabled={localLoading}
           className="bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80"
         >
-          {loading ? "Loading..." : "Update"}
+          {localLoading ? "Loading..." : "Update"}
         </button>
         <Link
           className="bg-green-700 text-white p-3 rounded-lg uppercase text-center hover:opacity-95"
@@ -278,9 +360,12 @@ export default function Profile() {
         </span>
       </div>
 
-      <p className="text-red-700 mt-5">{error ? error : ""}</p>
+      <p className="text-red-700 mt-5">{localError ? localError : ""}</p>
       <p className="text-green-700 mt-5">
         {updateSuccess ? "User is updated successfully!" : ""}
+      </p>
+      <p className="text-blue-700 mt-5">
+        Auth Status: {authStatus}
       </p>
       <button onClick={handleShowListings} className="text-green-700 w-full">
         Show Listings

@@ -43,7 +43,7 @@ const userSlice = createSlice({
       state.error = null;
     },
     deleteUserFailure: (state, action) => {
-      state.error = aciton.payload;
+      state.error = action.payload;
       state.loading = false;
     },
     signOutUserStart: (state, action) => {
@@ -55,7 +55,7 @@ const userSlice = createSlice({
       state.error = null;
     },
     signOutUserFailure: (state, action) => {
-      state.error = aciton.payload;
+      state.error = action.payload;
       state.loading = false;
     },
 

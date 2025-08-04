@@ -14,4 +14,6 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: STRIPE_SECRET_KEY
-        sync: false 
+        sync: false
+      - key: CLIENT_URL
+        value: https://neelstate.onrender.com 

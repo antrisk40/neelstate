@@ -11,7 +11,26 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+// Configure CORS with multiple origins for development and production
+const allowedOrigins = [
+  process.env.CLIENT_URL || "https://neelstate.onrender.com",
+  "http://localhost:5173", // For local development
+  "http://localhost:3000"  // For local development
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 
 app.use(express.json()); // this is used to get printed data on console from post request
 app.use(cookieParser());
