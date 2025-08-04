@@ -22,12 +22,19 @@
 
 3. **Set Environment Variables**
    Add these environment variables in Render:
-   - `VITE_API_URL`: Your API URL (e.g., `https://your-api.onrender.com`)
+   - `VITE_API_URL`: Your API URL (e.g., `https://neelstate-backend.onrender.com`)
    - `VITE_STRIPE_PUBLISHABLE_KEY`: Your Stripe publishable key
    - `VITE_MAPBOX_ACCESS_TOKEN`: Your Mapbox access token
    - `VITE_FIREBASE_API_KEY`: Your Firebase API key
 
-4. **Deploy**
+4. **Configure SPA Routing (Important!)**
+   - In your Render service settings, go to "Routes"
+   - Add a rewrite rule:
+     - **Source**: `/*`
+     - **Destination**: `/index.html`
+   - This ensures that all routes like `/sign-up`, `/listing/123`, etc. work on refresh
+
+5. **Deploy**
    - Click "Create Static Site"
    - Render will automatically build and deploy your site
 
@@ -46,6 +53,15 @@ The build has been optimized with:
 - **Main App**: ~353KB
 - **Mapbox**: ~1.5MB (loaded on demand)
 
+### SPA Routing Fix
+
+If you're getting "Not Found" errors when refreshing pages:
+
+1. **For Render**: Use the routes configuration in `render.yaml`
+2. **For Netlify**: The `_redirects` file is already included
+3. **For Vercel**: The `vercel.json` file is already included
+4. **For other platforms**: Configure URL rewriting to serve `index.html` for all routes
+
 ### Troubleshooting
 
 If you encounter build issues:
@@ -54,6 +70,7 @@ If you encounter build issues:
 2. **Clear cache**: Delete `node_modules` and reinstall
 3. **Check environment variables**: Ensure all required env vars are set
 4. **Check API URL**: Make sure your API is deployed and accessible
+5. **SPA Routing**: Ensure URL rewriting is configured for your hosting platform
 
 ### Local Testing
 
