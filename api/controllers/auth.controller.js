@@ -6,16 +6,45 @@ import { errorHandler } from "../utils/error.js";
 export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
 
+  console.log('Signup request received:', { username, email, password: password ? '[HIDDEN]' : 'MISSING' });
+
   try {
+    // Validate required fields
+    if (!username || !email || !password) {
+      console.log('Missing required fields:', { username: !!username, email: !!email, password: !!password });
+      return res.status(400).json({ 
+        success: false,
+        message: "All fields are required" 
+      });
+    }
+
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      console.log('User already exists:', email);
+      return res.status(400).json({ 
+        success: false,
+        message: "User already exists" 
+      });
     }
+
+    // Hash password and create user
     const hashedPassword = bcryptjs.hashSync(password, 10);
-    const newUser = new User({ username, email, password: hashedPassword });
+    const newUser = new User({ 
+      username, 
+      email, 
+      password: hashedPassword 
+    });
+    
     await newUser.save();
-    res.status(201).json({ message: "User created successfully" });
+    console.log('User created successfully:', email);
+    
+    res.status(201).json({ 
+      success: true,
+      message: "User created successfully" 
+    });
   } catch (error) {
+    console.error('Signup error:', error);
     next(error);
   }
 };

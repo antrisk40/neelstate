@@ -19,7 +19,13 @@ function SignUp() {
     e.preventDefault(); //use to prevent refresh of page
     try { 
       setLoading(true);
-      const res = await fetch('/api/auth/signup',
+      setError(null);
+      
+      // Use the full API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const signupUrl = apiUrl ? `${apiUrl}/api/auth/signup` : '/api/auth/signup';
+      
+      const res = await fetch(signupUrl,
         {
           method: 'POST',
           headers: {
@@ -28,18 +34,48 @@ function SignUp() {
           body:JSON.stringify(formData),
         }
       );
-      const data = await res.json();
-      console.log(data);
-      if (data.success === false) {
+      
+      // Check if response is ok before parsing JSON
+      if (!res.ok) {
+        const errorText = await res.text();
+        let errorMessage = 'Sign up failed';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        
+        setError(errorMessage);
         setLoading(false);
-        setError(null);
         return;
       }
+      
+      // Try to parse JSON response
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        console.error('Failed to parse JSON response:', parseError);
+        setError('Invalid response from server');
+        setLoading(false);
+        return;
+      }
+      
+      console.log(data);
+      if (data.success === false) {
+        setError(data.message || 'Sign up failed');
+        setLoading(false);
+        return;
+      }
+      
       setLoading(false);
       navigate('/sign-in');
     } catch(error){
+      console.error('Sign up error:', error);
+      setError(error.message || 'Something went wrong');
       setLoading(false);
-      setError(error.message);
     }
   }
   

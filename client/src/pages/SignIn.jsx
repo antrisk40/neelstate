@@ -23,7 +23,12 @@ export default function SignIn() {
     e.preventDefault();
     try {
       dispatch(signInStart());
-      const res = await fetch("/api/auth/signin", {
+      
+      // Use the full API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const signinUrl = apiUrl ? `${apiUrl}/api/auth/signin` : '/api/auth/signin';
+      
+      const res = await fetch(signinUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

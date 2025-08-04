@@ -20,7 +20,12 @@ export default function OAuth() {
         if (result) {
           setIsLoading(true);
           // User signed in via redirect
-          const res = await fetch("/api/auth/google", {
+          
+          // Use the full API URL from environment variable
+          const apiUrl = import.meta.env.VITE_API_URL || '';
+          const googleAuthUrl = apiUrl ? `${apiUrl}/api/auth/google` : '/api/auth/google';
+          
+          const res = await fetch(googleAuthUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
