@@ -15,6 +15,7 @@ import {
   deleteUserStart,
   deleteUserSuccess,
   signOutUserStart,
+  signOutSuccess,
 } from "../redux/user/userSlice";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
@@ -73,8 +74,14 @@ export default function Profile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      dispatch(updateUserStart());
-      const res = await fetch(`/api/user/update/${currentUser._id}`, {
+      setLoading(true);
+      setError(false);
+      
+      // Get API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const updateUrl = apiUrl ? `${apiUrl}/api/user/update/${currentUser._id}` : `/api/user/update/${currentUser._id}`;
+      
+      const res = await fetch(updateUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -82,82 +89,115 @@ export default function Profile() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
+
       if (data.success === false) {
-        dispatch(updateUserFailure(data.message));
+        setError(data.message);
+        setLoading(false);
         return;
       }
 
       dispatch(updateUserSuccess(data));
       setUpdateSuccess(true);
+      setLoading(false);
     } catch (error) {
-      dispatch(updateUserFailure(error.message));
+      setError(error.message);
+      setLoading(false);
     }
   };
 
   const handleDeleteUser = async () => {
     try {
-      dispatch(deleteUserStart());
-      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+      setLoading(true);
+      setError(false);
+      
+      // Get API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const deleteUrl = apiUrl ? `${apiUrl}/api/user/delete/${currentUser._id}` : `/api/user/delete/${currentUser._id}`;
+      
+      const res = await fetch(deleteUrl, {
         method: "DELETE",
       });
       const data = await res.json();
       if (data.success === false) {
-        dispatch(deleteUserFailure(data.message));
+        setError(data.message);
+        setLoading(false);
         return;
       }
-      dispatch(deleteUserSuccess(data));
+      dispatch(deleteUserSuccess());
     } catch (error) {
-      dispatch(deleteUserFailure(error.message));
+      setError(error.message);
+      setLoading(false);
     }
   };
 
   const handleSignOut = async () => {
     try {
-      dispatch(signOutUserStart());
-      const res = await fetch("/api/auth/signout");
+      // Get API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const signoutUrl = apiUrl ? `${apiUrl}/api/auth/signout` : '/api/auth/signout';
+      
+      const res = await fetch(signoutUrl);
       const data = await res.json();
       if (data.success === false) {
-        dispatch(deleteUserFailure(data.message));
+        setError(data.message);
         return;
       }
-      dispatch(deleteUserSuccess(data));
+      dispatch(signOutSuccess());
     } catch (error) {
-      dispatch(deleteUserFailure(data.message));
+      setError(error.message);
     }
   };
 
-  const handleShowListings = async () => {
-    try {
-      setShowListingsError(false);
-      const res = await fetch(`/api/user/listing/${currentUser._id}`);
-      const data = await res.json();
-      if (data.success === false) {
-        setShowListingsError(true);
-        return;
+  useEffect(() => {
+    const fetchUserListings = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+        
+        // Get API URL from environment variable
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const listingsUrl = apiUrl ? `${apiUrl}/api/user/listing/${currentUser._id}` : `/api/user/listing/${currentUser._id}`;
+        
+        const res = await fetch(listingsUrl);
+        const data = await res.json();
+        if (data.success === false) {
+          setError(data.message);
+          setLoading(false);
+          return;
+        }
+        setUserListings(data);
+        setLoading(false);
+      } catch (error) {
+        setError(error.message);
+        setLoading(false);
       }
-
-      setUserListings(data);
-    } catch (error) {
-      setShowListingsError(true);
-    }
-  };
+    };
+    fetchUserListings();
+  }, [currentUser._id]);
 
   const handleListingDelete = async (listingId) => {
     try {
-      const res = await fetch(`/api/listing/delete/${listingId}`, {
+      setLoading(true);
+      setError(false);
+      
+      // Get API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const deleteUrl = apiUrl ? `${apiUrl}/api/listing/delete/${listingId}` : `/api/listing/delete/${listingId}`;
+      
+      const res = await fetch(deleteUrl, {
         method: "DELETE",
       });
       const data = await res.json();
       if (data.success === false) {
-        console.log(data.message);
+        setError(data.message);
+        setLoading(false);
         return;
       }
-
-      setUserListings((prev) =>
-        prev.filter((listing) => listing._id !== listingId)
-      );
+      setUserListings((prev) => prev.filter((listing) => listing._id !== listingId));
+      setLoading(false);
     } catch (error) {
-      console.log(error.message);
+      setError(error.message);
+      setLoading(false);
     }
   };
   return (

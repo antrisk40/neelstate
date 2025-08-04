@@ -100,7 +100,10 @@ const PaymentForm = ({ listing, onSuccess, onError }) => {
 
       try {
         // Create payment intent
-        const paymentIntentRes = await fetch(`/api/payment/create-payment-intent/${listing._id}`, {
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const paymentIntentUrl = apiUrl ? `${apiUrl}/api/payment/create-payment-intent/${listing._id}` : `/api/payment/create-payment-intent/${listing._id}`;
+        
+        const paymentIntentRes = await fetch(paymentIntentUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -132,7 +135,9 @@ const PaymentForm = ({ listing, onSuccess, onError }) => {
 
         if (paymentIntent.status === 'succeeded') {
           // Confirm payment on backend
-          const confirmRes = await fetch(`/api/payment/confirm-payment/${paymentIntent.id}`, {
+          const confirmUrl = apiUrl ? `${apiUrl}/api/payment/confirm-payment/${paymentIntent.id}` : `/api/payment/confirm-payment/${paymentIntent.id}`;
+          
+          const confirmRes = await fetch(confirmUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

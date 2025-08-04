@@ -39,18 +39,32 @@ export default function CreateListing() {
 
   useEffect(() => {
     const fetchListing = async () => {
-      const listingId = params.listingId;
-      const res = await fetch(`/api/listing/get/${listingId}`);
-      const data = await res.json();
-      if (data.success === false) {
-        console.log(data.message);
-        return;
+      try {
+        setLoading(true);
+        setError(false);
+        
+        // Get API URL from environment variable
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const listingId = params.listingId;
+        const listingUrl = apiUrl ? `${apiUrl}/api/listing/get/${listingId}` : `/api/listing/get/${listingId}`;
+        
+        const res = await fetch(listingUrl);
+        const data = await res.json();
+        
+        if (data.success === false) {
+          setError(data.message);
+          setLoading(false);
+          return;
+        }
+        setFormData(data);
+        setLoading(false);
+      } catch (error) {
+        setError(error.message);
+        setLoading(false);
       }
-      setFormData(data);
     };
-
     fetchListing();
-  }, []);
+  }, [params.listingId]);
 
   const handleImageSubmit = (e) => {
     if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
@@ -179,7 +193,10 @@ export default function CreateListing() {
         return setError("Discount price must be lower than regular price");
       setLoading(true);
       setError(false);
-      const res = await fetch(`/api/listing/update/${params.listingId}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const updateUrl = apiUrl ? `${apiUrl}/api/listing/update/${params.listingId}` : `/api/listing/update/${params.listingId}`;
+      
+      const res = await fetch(updateUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -190,10 +207,12 @@ export default function CreateListing() {
         }),
       });
       const data = await res.json();
-      setLoading(false);
       if (data.success === false) {
         setError(data.message);
+        setLoading(false);
+        return;
       }
+      setLoading(false);
       navigate(`/listing/${data._id}`);
     } catch (error) {
       setError(error.message);

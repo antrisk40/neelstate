@@ -163,7 +163,12 @@ export default function CreateListing() {
         return setError("Discount price must be lower than regular price");
       setLoading(true);
       setError(false);
-      const res = await fetch("/api/listing/create", {
+      
+      // Get API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const createUrl = apiUrl ? `${apiUrl}/api/listing/create` : '/api/listing/create';
+      
+      const res = await fetch(createUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -174,10 +179,12 @@ export default function CreateListing() {
         }),
       });
       const data = await res.json();
-      setLoading(false);
       if (data.success === false) {
         setError(data.message);
+        setLoading(false);
+        return;
       }
+      setLoading(false);
       navigate(`/listing/${data._id}`);
     } catch (error) {
       setError(error.message);

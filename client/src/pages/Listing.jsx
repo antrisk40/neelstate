@@ -54,8 +54,15 @@ export default function Listing() {
     const fetchListing = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/listing/get/${params.listingId}`);
+        setError(false);
+        
+        // Get API URL from environment variable
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const listingUrl = apiUrl ? `${apiUrl}/api/listing/get/${params.listingId}` : `/api/listing/get/${params.listingId}`;
+        
+        const res = await fetch(listingUrl);
         const data = await res.json();
+        
         if (data.success === false) {
           setError(true);
           setLoading(false);
@@ -63,12 +70,12 @@ export default function Listing() {
         }
         setListing(data);
         setLoading(false);
-        setError(false);
       } catch (error) {
         setError(true);
         setLoading(false);
       }
     };
+
     fetchListing();
   }, [params.listingId]);
 

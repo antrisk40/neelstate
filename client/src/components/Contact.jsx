@@ -5,6 +5,8 @@ export default function Contact({ listing, isExpanded, onToggle }) {
   const [landlord, setLandlord] = useState(null);
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const onChange = (e) => {
     setMessage(e.target.value);
@@ -13,11 +15,25 @@ export default function Contact({ listing, isExpanded, onToggle }) {
   useEffect(() => {
     const fetchLandlord = async () => {
       try {
-        const res = await fetch(`/api/user/${listing.userRef}`);
+        setLoading(true);
+        setError(false);
+        
+        // Get API URL from environment variable
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const userUrl = apiUrl ? `${apiUrl}/api/user/${listing.userRef}` : `/api/user/${listing.userRef}`;
+        
+        const res = await fetch(userUrl);
         const data = await res.json();
-        setLandlord(data);
+        
+        if (res.ok) {
+          setLandlord(data);
+        } else {
+          setError(true);
+        }
       } catch (error) {
-        console.log(error);
+        setError(true);
+      } finally {
+        setLoading(false);
       }
     };
     fetchLandlord();

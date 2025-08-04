@@ -13,7 +13,13 @@ export default function PurchasedListings() {
     const fetchPurchasedListings = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/payment/purchased-listings/${currentUser._id}`);
+        setError(false);
+        
+        // Get API URL from environment variable
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const purchasedUrl = apiUrl ? `${apiUrl}/api/payment/purchased-listings/${currentUser._id}` : `/api/payment/purchased-listings/${currentUser._id}`;
+        
+        const res = await fetch(purchasedUrl);
         const data = await res.json();
         
         if (res.ok) {
