@@ -77,16 +77,6 @@ const listingSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    // Stripe payment information
-    stripePaymentIntentId: {
-      type: String,
-      default: null,
-    },
-    paymentStatus: {
-      type: String,
-      enum: ['pending', 'completed', 'failed', 'refunded'],
-      default: 'pending',
-    },
   },
   { timestamps: true }
 );

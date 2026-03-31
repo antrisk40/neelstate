@@ -19,7 +19,6 @@ import {
 } from "react-icons/fa";
 import Contact from "../components/Contact";
 import Map from "../components/Map";
-import PaymentForm from "../components/PaymentForm";
 
 // https://sabe.io/blog/javascript-format-numbers-commas#:~:text=The%20best%20way%20to%20format,format%20the%20number%20with%20commas.
 
@@ -30,25 +29,9 @@ export default function Listing() {
   const [error, setError] = useState(false);
   const [copied, setCopied] = useState(false);
   const [contact, setContact] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
-  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
-  const [purchaseError, setPurchaseError] = useState(null);
   const [contactExpanded, setContactExpanded] = useState(false);
-  const [stripeAvailable, setStripeAvailable] = useState(true);
   const params = useParams();
   const { currentUser } = useSelector((state) => state.user);
-
-  useEffect(() => {
-    // Check if Stripe is available
-    const checkStripeAvailability = () => {
-      const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-      if (!publishableKey || publishableKey === 'pk_test_your_stripe_publishable_key_here') {
-        setStripeAvailable(false);
-      }
-    };
-    
-    checkStripeAvailability();
-  }, []);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -119,10 +102,10 @@ export default function Listing() {
           )}
           <div className="flex flex-col max-w-4xl mx-auto p-3 my-7 gap-4">
             <p className="text-2xl font-semibold">
-              {listing.name} - ${" "}
+              {listing.name} - ₹{" "}
               {listing.offer
-                ? listing.discountPrice.toLocaleString("en-US")
-                : listing.regularPrice.toLocaleString("en-US")}
+                ? listing.discountPrice.toLocaleString("en-IN")
+                : listing.regularPrice.toLocaleString("en-IN")}
               {listing.type === "rent" && " / month"}
             </p>
             <p className="flex items-center mt-6 gap-2 text-slate-600  text-sm">
@@ -135,7 +118,7 @@ export default function Listing() {
               </p>
               {listing.offer && (
                 <p className="bg-green-900 w-full max-w-[200px] text-white text-center p-1 rounded-md">
-                  ${+listing.regularPrice - +listing.discountPrice} OFF
+                  ₹{+listing.regularPrice - +listing.discountPrice} OFF
                 </p>
               )}
               {listing.isSold && (
@@ -172,29 +155,13 @@ export default function Listing() {
               </li>
             </ul>
             
-            {/* Purchase and Contact Buttons */}
             {currentUser && listing.userRef !== currentUser._id && !listing.isSold && (
-              <div className="flex gap-4">
-                {stripeAvailable ? (
-                  <button
-                    onClick={() => setShowPayment(true)}
-                    className="bg-blue-600 text-white rounded-lg uppercase hover:opacity-95 p-3 flex-1"
-                  >
-                    Buy Now - ${listing.offer ? listing.discountPrice : listing.regularPrice}
-                  </button>
-                ) : (
-                  <div className="flex-1 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                    <FaExclamationTriangle />
-                    <span className="text-sm">Payment system unavailable. Please contact seller directly.</span>
-                  </div>
-                )}
-                <button
-                  onClick={() => setContactExpanded(!contactExpanded)}
-                  className="bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 p-3"
-                >
-                  {contactExpanded ? 'Hide Contact' : 'Contact Seller'}
-                </button>
-              </div>
+              <button
+                onClick={() => setContactExpanded(!contactExpanded)}
+                className="bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 p-3"
+              >
+                {contactExpanded ? 'Hide Contact' : 'Contact Seller'}
+              </button>
             )}
             
             {currentUser && listing.userRef !== currentUser._id && listing.isSold && (
@@ -243,59 +210,7 @@ export default function Listing() {
         </div>
       )}
       
-      {/* Payment Form */}
-      {showPayment && stripeAvailable && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Complete Purchase</h2>
-              <button
-                onClick={() => {
-                  setShowPayment(false);
-                  setPurchaseError(null);
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaTimesCircle size={20} />
-              </button>
-            </div>
-            
-            {purchaseSuccess ? (
-              <div className="text-center">
-                <FaCheckCircle className="text-green-500 text-4xl mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-green-800 mb-2">
-                  Purchase Successful!
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  You have successfully purchased this property.
-                </p>
-                <button
-                  onClick={() => {
-                    setShowPayment(false);
-                    setPurchaseSuccess(false);
-                    window.location.reload();
-                  }}
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                >
-                  Continue
-                </button>
-              </div>
-            ) : (
-              <PaymentForm
-                listing={listing}
-                onSuccess={() => setPurchaseSuccess(true)}
-                onError={(error) => setPurchaseError(error)}
-              />
-            )}
-            
-            {purchaseError && (
-              <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                {purchaseError}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      
     </main>
   );
 }

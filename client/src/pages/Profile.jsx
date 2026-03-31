@@ -1,12 +1,6 @@
 import { useSelector } from "react-redux";
 import { useRef, useState, useEffect } from "react";
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytesResumable,
-} from "firebase/storage";
-import { app } from "../firebase";
+
 import {
   updateUserStart,
   updateUserSuccess,
@@ -30,15 +24,8 @@ export default function Profile() {
   const [showListingsError, setShowListingsError] = useState(false);
   const [userListings, setUserListings] = useState([]);
   const [localLoading, setLocalLoading] = useState(false);
-  const [localError, setLocalError] = useState(false);
-  const [authStatus, setAuthStatus] = useState('checking');
+    const [localError, setLocalError] = useState(false);
   const dispatch = useDispatch();
-
-  // firebase storage
-  // allow read;
-  // allow write: if
-  // request.resource.size < 2 * 1024 * 1024 &&
-  // request.resource.contentType.matches('image/.*')
 
   useEffect(() => {
     if (file) {
@@ -46,28 +33,35 @@ export default function Profile() {
     }
   }, [file]);
 
-  const handleFileUpload = (file) => {
-    const storage = getStorage(app);
-    const fileName = new Date().getTime() + file.name;
-    const storageRef = ref(storage, fileName);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+  const handleFileUpload = async (file) => {
+    try {
+      setFileUploadError(false);
+      setFilePerc(50);
+      const formDataUpload = new FormData();
+      formDataUpload.append("images", file);
 
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setFilePerc(Math.round(progress));
-      },
-      (error) => {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const uploadUrl = apiUrl ? `${apiUrl}/api/upload` : '/api/upload';
+
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        body: formDataUpload,
+        credentials: "include"
+      });
+
+      const data = await res.json();
+      
+      if (data.success === false) {
         setFileUploadError(true);
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) =>
-          setFormData({ ...formData, avatar: downloadURL })
-        );
+        setFilePerc(0);
+      } else {
+        setFormData({ ...formData, avatar: data.urls[0] });
+        setFilePerc(100);
       }
-    );
+    } catch (error) {
+      setFileUploadError(true);
+      setFilePerc(0);
+    }
   };
 
   const handleChange = (e) => {
@@ -158,30 +152,6 @@ export default function Profile() {
     }
   };
 
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || '';
-        const authUrl = apiUrl ? `${apiUrl}/api/auth/test` : '/api/auth/test';
-        
-        const res = await fetch(authUrl, {
-          credentials: 'include',
-        });
-        
-        if (res.ok) {
-          setAuthStatus('authenticated');
-        } else {
-          setAuthStatus('not-authenticated');
-        }
-      } catch (error) {
-        console.error('Auth check error:', error);
-        setAuthStatus('error');
-      }
-    };
-    
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     const fetchUserListings = async () => {
@@ -364,9 +334,7 @@ export default function Profile() {
       <p className="text-green-700 mt-5">
         {updateSuccess ? "User is updated successfully!" : ""}
       </p>
-      <p className="text-blue-700 mt-5">
-        Auth Status: {authStatus}
-      </p>
+
       <button onClick={handleShowListings} className="text-green-700 w-full">
         Show Listings
       </button>

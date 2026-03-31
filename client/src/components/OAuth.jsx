@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { GoogleAuthProvider, getAuth, signInWithRedirect, getRedirectResult } from "firebase/auth";
-import { app } from "../firebase";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { signInSuccess } from "../redux/user/userSlice";
 import { useNavigate } from "react-router-dom";
@@ -9,69 +7,93 @@ export default function OAuth() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const buttonRef = useRef(null);
 
-  // Handle redirect result when component mounts
   useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const auth = getAuth(app);
-        const result = await getRedirectResult(auth);
-        
-        if (result) {
-          setIsLoading(true);
-          // User signed in via redirect
-          
-          // Use the full API URL from environment variable
-          const apiUrl = import.meta.env.VITE_API_URL || '';
-          const googleAuthUrl = apiUrl ? `${apiUrl}/api/auth/google` : '/api/auth/google';
-          
-          const res = await fetch(googleAuthUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              name: result.user.displayName,
-              email: result.user.email,
-              photo: result.user.photoURL,
-            }),
-          });
-          const data = await res.json();
-          dispatch(signInSuccess(data));
-          navigate("/");
-        }
-      } catch (error) {
-        console.log("Could not sign in with Google", error);
-        setIsLoading(false);
-      }
+    // Load Google Identity Services script
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeGoogle;
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
     };
+  }, []);
 
-    handleRedirectResult();
-  }, [dispatch, navigate]);
+  const initializeGoogle = () => {
+    if (!window.google) return;
 
-  const handleGoogleClick = async () => {
+    window.google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse,
+    });
+  };
+
+  const handleCredentialResponse = async (response) => {
     try {
       setIsLoading(true);
-      const provider = new GoogleAuthProvider();
-      const auth = getAuth(app);
+
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const googleAuthUrl = apiUrl
+        ? `${apiUrl}/api/auth/google`
+        : "/api/auth/google";
+
+      // Securely send the raw cryptographically signed token to our backend
+      const res = await fetch(googleAuthUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ token: response.credential }),
+      });
+
+      const data = await res.json();
       
-      // Use redirect instead of popup
-      await signInWithRedirect(auth, provider);
+      if (data.success === false) {
+        console.log("Could not sign in with Google", data.message);
+        setIsLoading(false);
+        return;
+      }
+      
+      dispatch(signInSuccess(data));
+      navigate("/");
     } catch (error) {
       console.log("Could not sign in with Google", error);
       setIsLoading(false);
     }
   };
 
+  const handleGoogleClick = () => {
+    if (!window.google) return;
+    setIsLoading(true);
+    window.google.accounts.id.prompt((notification) => {
+      if (
+        notification.isNotDisplayed() ||
+        notification.isSkippedMoment()
+      ) {
+        // Fallback: show Google's One Tap UI if popup was blocked
+        window.google.accounts.id.renderButton(buttonRef.current, {
+          theme: "outline",
+          size: "large",
+          width: "100%",
+        });
+        setIsLoading(false);
+      }
+    });
+  };
+
   return (
-    <button
-      onClick={handleGoogleClick}
-      disabled={isLoading}
-      type="button"
-      className="bg-red-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
-    >
-      {isLoading ? "Redirecting..." : "Continue with Google"}
-    </button>
+    <div ref={buttonRef}>
+      <button
+        onClick={handleGoogleClick}
+        disabled={isLoading}
+        type="button"
+        className="bg-red-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80 w-full"
+      >
+        {isLoading ? "Signing in..." : "Continue with Google"}
+      </button>
+    </div>
   );
 }
