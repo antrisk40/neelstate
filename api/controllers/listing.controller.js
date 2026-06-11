@@ -116,3 +116,63 @@ export const getListings = async (req, res, next) => {
     next(error);
   }
 };
+
+export const buyListing = async (req, res, next) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) {
+      return next(errorHandler(404, "Listing not found!"));
+    }
+    if (listing.isSold) {
+      return next(errorHandler(400, "Listing is already sold!"));
+    }
+    if (req.user.id === listing.userRef) {
+      return next(errorHandler(400, "You cannot buy your own listing!"));
+    }
+    if (listing.purchaseRequests && listing.purchaseRequests.includes(req.user.id)) {
+      return next(errorHandler(400, "You have already requested to buy this property!"));
+    }
+
+    const updatedListing = await Listing.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: { purchaseRequests: req.user.id }
+      },
+      { new: true }
+    );
+    res.status(200).json(updatedListing);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const acceptBuyRequest = async (req, res, next) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) {
+      return next(errorHandler(404, "Listing not found!"));
+    }
+    if (listing.isSold) {
+      return next(errorHandler(400, "Listing is already sold!"));
+    }
+    if (req.user.id !== listing.userRef) {
+      return next(errorHandler(401, "Only the owner can accept requests!"));
+    }
+
+    const { buyerId } = req.params;
+
+    const updatedListing = await Listing.findByIdAndUpdate(
+      req.params.id,
+      {
+        isSold: true,
+        buyerId: buyerId,
+        soldAt: new Date(),
+        $set: { purchaseRequests: [] }
+      },
+      { new: true }
+    );
+    res.status(200).json(updatedListing);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -77,6 +77,12 @@ const listingSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    purchaseRequests: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      }
+    ],
   },
   { timestamps: true }
 );

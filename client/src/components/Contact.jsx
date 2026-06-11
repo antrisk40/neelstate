@@ -7,6 +7,8 @@ export default function Contact({ listing, isExpanded, onToggle }) {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageSuccess, setMessageSuccess] = useState(false);
 
   const onChange = (e) => {
     setMessage(e.target.value);
@@ -49,6 +51,33 @@ export default function Contact({ listing, isExpanded, onToggle }) {
     } catch (error) {
       console.log('Failed to open email client:', error);
       handleCopyEmail();
+    }
+  };
+
+  const handleSendMessageInternal = async () => {
+    try {
+      if (!message.trim()) return;
+      setSendingMessage(true);
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${apiUrl}/api/messages/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          receiverId: landlord._id,
+          content: message,
+          listingId: listing._id
+        }),
+      });
+      const data = await res.json();
+      if (data.success !== false) {
+        setMessageSuccess(true);
+        setMessage("");
+      }
+    } catch (error) {
+      console.log('Failed to send message:', error);
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -146,13 +175,20 @@ export default function Contact({ listing, isExpanded, onToggle }) {
 
               {/* Action Buttons */}
               <div className="space-y-3">
-                <button
-                  onClick={handleSendEmail}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium"
-                >
-                  <FaEnvelope />
-                  Send Email
-                </button>
+                {messageSuccess ? (
+                  <div className="p-3 bg-green-100 text-green-800 rounded-lg text-center font-medium">
+                    Message sent successfully! You can view it in your Messages page.
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleSendMessageInternal}
+                    disabled={sendingMessage || !message.trim()}
+                    className="w-full bg-slate-700 text-white py-3 px-4 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 font-medium disabled:opacity-50"
+                  >
+                    <FaEnvelope />
+                    {sendingMessage ? "Sending..." : "Send Message"}
+                  </button>
+                )}
                 
                 <div className="flex gap-2">
                   <button

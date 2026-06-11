@@ -83,6 +83,11 @@ function Header() {
           {currentUser && (
             <>
               <li>
+                <Link to="/messages" className="text-slate-700 hover:underline">
+                  Messages
+                </Link>
+              </li>
+              <li>
                 <Link to="/profile" className="text-slate-700 hover:underline">
                   Profile
                 </Link>

@@ -30,6 +30,8 @@ export default function Listing() {
   const [copied, setCopied] = useState(false);
   const [contact, setContact] = useState(false);
   const [contactExpanded, setContactExpanded] = useState(false);
+  const [buying, setBuying] = useState(false);
+  const [buyError, setBuyError] = useState(null);
   const params = useParams();
   const { currentUser } = useSelector((state) => state.user);
 
@@ -61,6 +63,35 @@ export default function Listing() {
 
     fetchListing();
   }, [params.listingId]);
+
+  const handleBuy = async () => {
+    try {
+      setBuying(true);
+      setBuyError(null);
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${apiUrl}/api/listing/buy/${listing._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success === false) {
+        setBuyError(data.message);
+        setBuying(false);
+        return;
+      }
+      setListing({ 
+        ...listing, 
+        purchaseRequests: [...(listing.purchaseRequests || []), currentUser._id] 
+      });
+      setBuying(false);
+    } catch (error) {
+      setBuyError("Failed to process transaction.");
+      setBuying(false);
+    }
+  };
 
   return (
     <main>
@@ -156,12 +187,32 @@ export default function Listing() {
             </ul>
             
             {currentUser && listing.userRef !== currentUser._id && !listing.isSold && (
-              <button
-                onClick={() => setContactExpanded(!contactExpanded)}
-                className="bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 p-3"
-              >
-                {contactExpanded ? 'Hide Contact' : 'Contact Seller'}
-              </button>
+              <div className="flex flex-col gap-2">
+                {listing.purchaseRequests?.includes(currentUser._id) ? (
+                  <button
+                    disabled
+                    className="bg-yellow-600 text-white rounded-lg uppercase p-3 opacity-80"
+                  >
+                    Request Pending
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleBuy}
+                    disabled={buying}
+                    className="bg-green-700 text-white rounded-lg uppercase hover:opacity-95 p-3"
+                  >
+                    {buying ? "Processing..." : listing.type === "rent" ? "Request to Rent" : "Request to Buy"}
+                  </button>
+                )}
+                {buyError && <p className="text-red-500 text-sm">{buyError}</p>}
+                
+                <button
+                  onClick={() => setContactExpanded(!contactExpanded)}
+                  className="bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 p-3"
+                >
+                  {contactExpanded ? 'Hide Contact' : 'Contact Seller'}
+                </button>
+              </div>
             )}
             
             {currentUser && listing.userRef !== currentUser._id && listing.isSold && (

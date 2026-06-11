@@ -252,6 +252,36 @@ export default function Profile() {
       setLocalLoading(false);
     }
   };
+
+  const handleAcceptRequest = async (listingId, buyerId) => {
+    try {
+      setLocalLoading(true);
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${apiUrl}/api/listing/accept-buy/${listingId}/${buyerId}`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success === false) {
+        setLocalError(data.message);
+        setLocalLoading(false);
+        return;
+      }
+      
+      setUserListings((prev) =>
+        prev.map((listing) =>
+          listing._id === listingId
+            ? { ...listing, isSold: true, purchaseRequests: [] }
+            : listing
+        )
+      );
+      setLocalLoading(false);
+    } catch (error) {
+      setLocalError("Failed to accept request");
+      setLocalLoading(false);
+    }
+  };
+
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
@@ -350,33 +380,62 @@ export default function Profile() {
           {userListings.map((listing) => (
             <div
               key={listing._id}
-              className="border rounded-lg p-3 flex justify-between items-center gap-4"
+              className="border rounded-lg p-3 flex flex-col gap-4"
             >
-              <Link to={`/listing/${listing._id}`}>
-                <img
-                  src={listing.imageUrls[0]}
-                  alt="listing cover"
-                  className="h-16 w-16 object-contain"
-                />
-              </Link>
-              <Link
-                className="text-slate-700 font-semibold  hover:underline truncate flex-1"
-                to={`/listing/${listing._id}`}
-              >
-                <p>{listing.name}</p>
-              </Link>
-
-              <div className="flex flex-col item-center">
-                <button
-                  onClick={() => handleListingDelete(listing._id)}
-                  className="text-red-700 uppercase"
-                >
-                  Delete
-                </button>
-                <Link to={`/update-listing/${listing._id}`}>
-                  <button className="text-green-700 uppercase">Edit</button>
+              <div className="flex justify-between items-center gap-4">
+                <Link to={`/listing/${listing._id}`}>
+                  <img
+                    src={listing.imageUrls[0]}
+                    alt="listing cover"
+                    className="h-16 w-16 object-contain"
+                  />
                 </Link>
+                <Link
+                  className="text-slate-700 font-semibold hover:underline truncate flex-1"
+                  to={`/listing/${listing._id}`}
+                >
+                  <p>{listing.name}</p>
+                  {listing.isSold && <span className="text-xs text-white bg-slate-800 px-2 py-1 rounded">Sold</span>}
+                </Link>
+
+                <div className="flex flex-col item-center">
+                  <button
+                    onClick={() => handleListingDelete(listing._id)}
+                    className="text-red-700 uppercase"
+                  >
+                    Delete
+                  </button>
+                  <Link to={`/update-listing/${listing._id}`}>
+                    <button className="text-green-700 uppercase">Edit</button>
+                  </Link>
+                </div>
               </div>
+
+              {/* Purchase Requests */}
+              {listing.purchaseRequests && listing.purchaseRequests.length > 0 && !listing.isSold && (
+                <div className="bg-slate-50 p-3 rounded-lg border">
+                  <h3 className="text-sm font-semibold mb-2">Pending Requests</h3>
+                  <div className="flex flex-col gap-2">
+                    {listing.purchaseRequests.map((requester) => (
+                      <div key={requester._id} className="flex justify-between items-center bg-white p-2 rounded border">
+                        <div className="flex items-center gap-2">
+                          <img src={requester.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} alt="avatar" className="w-8 h-8 rounded-full object-cover" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold">{requester.username}</span>
+                            <span className="text-xs text-slate-500">{requester.email}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleAcceptRequest(listing._id, requester._id)}
+                          className="bg-green-700 text-white px-3 py-1 rounded text-xs uppercase hover:opacity-95"
+                        >
+                          Approve
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

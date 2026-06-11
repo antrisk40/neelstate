@@ -7,6 +7,7 @@ import authRouter from './routes/auth.route.js'
 import cookieParser from "cookie-parser";
 import listingRouter from "./routes/listing.route.js";
 import uploadRouter from "./routes/upload.route.js";
+import messageRouter from "./routes/message.route.js";
 dotenv.config();
 
 const app = express();
@@ -55,6 +56,7 @@ app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/listing", listingRouter);
 app.use("/api/upload", uploadRouter);
+app.use("/api/messages", messageRouter);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
