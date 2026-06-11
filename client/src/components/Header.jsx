@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 
 function Header() {
-  const { currentUser } = useSelector((state) => state.user); // Ensure the slice name is correct
+  const { currentUser, loading } = useSelector((state) => state.user);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
@@ -49,61 +49,60 @@ function Header() {
   }, [searchTerm, navigate]);
 
   return (
-    <header className="bg-blue-200 shadow-md">
-      <div className="flex justify-between items-center max-w-6xl mx-auto p-3">
+    <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all duration-300">
+      <div className="flex justify-between items-center max-w-6xl mx-auto p-4">
         <Link to="/">
-          <h1 className="font-bold text-sm sm:max-xl flex flex-wrap">
+          <h1 className="font-extrabold text-lg sm:text-xl flex flex-wrap items-center gap-1">
             <span className="text-blue-600">Neel</span>
-            <span className="text-blue-950">State</span>
+            <span className="text-slate-800">State</span>
           </h1>
         </Link>
-        <form onSubmit={handleSubmit} className="bg-blue-50 p-3 rounded-lg flex items-center">
+        <form onSubmit={handleSubmit} className="bg-slate-100 p-2 sm:p-3 rounded-full flex items-center shadow-inner border border-slate-200 transition-all focus-within:shadow-md focus-within:bg-white focus-within:border-blue-300">
           <input
             type="text"
-            placeholder="Search..."
-            className="bg-transparent focus:outline-none w-24 sm:w-64"
+            placeholder="Search properties..."
+            className="bg-transparent focus:outline-none w-28 sm:w-64 px-2 text-slate-700 placeholder-slate-400"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button type="submit">
-            <FaSearch className="text-slate-600" />
+          <button type="submit" className="pr-2 text-slate-500 hover:text-blue-600 transition-colors">
+            <FaSearch />
           </button>
         </form>
-        <ul className="flex gap-4">
-          <li>
-            <Link to="/" className="text-slate-700 hover:underline">
+        <ul className="flex items-center gap-6">
+          <li className="hidden md:inline">
+            <Link to="/" className="text-slate-600 hover:text-blue-600 font-medium transition-colors">
               Home
             </Link>
           </li>
-          <li>
-            <Link to="/about" className="text-slate-700 hover:underline">
+          <li className="hidden md:inline">
+            <Link to="/about" className="text-slate-600 hover:text-blue-600 font-medium transition-colors">
               About
             </Link>
           </li>
           {currentUser && (
             <>
-              <li>
-                <Link to="/messages" className="text-slate-700 hover:underline">
+              <li className="hidden sm:inline">
+                <Link to="/messages" className="text-slate-600 hover:text-blue-600 font-medium transition-colors">
                   Messages
-                </Link>
-              </li>
-              <li>
-                <Link to="/profile" className="text-slate-700 hover:underline">
-                  Profile
                 </Link>
               </li>
             </>
           )}
           <li>
-            <Link to="/sign-in" className="text-slate-700 hover:underline">
-              {currentUser ? (
+            <Link to="/profile" className="flex items-center justify-center">
+              {loading ? (
+                <div className="w-9 h-9 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              ) : currentUser ? (
                 <img
-                  className="rounded-full h-10 w-10 object-cover"
+                  className="rounded-full h-9 w-9 object-cover border-2 border-transparent hover:border-blue-500 transition-all shadow-sm"
                   src={currentUser.avatar}
                   alt="Profile"
                 />
               ) : (
-                "Sign in"
+                <span className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full font-medium transition-colors shadow-md hover:shadow-lg">
+                  Sign in
+                </span>
               )}
             </Link>
           </li>
